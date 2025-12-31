@@ -1,0 +1,29 @@
+{
+  "name": "Anomaly Flow ",
+  "dockerComposeFile": ["../.devcontainer/docker-compose.yml"],
+  "service": "app",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "runServices": ["redpanda", "prometheus", "grafana"],
+  "features": {
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "3.11"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-azuretools.vscode-docker",
+        "bierner.markdown-mermaid"
+      ]
+    }
+  },
+  "postCreateCommand": "python -m pip install -U pip && pip install -r requirements.txt",
+  "portsAttributes": {
+    "8000": { "label": "Processor Metrics" },
+    "9090": { "label": "Prometheus" },
+    "3000": { "label": "Grafana" }
+  },
+  "forwardPorts": [8000, 9090, 3000]
+}

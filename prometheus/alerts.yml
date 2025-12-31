@@ -1,0 +1,20 @@
+groups:
+  - name: anomalies
+    rules:
+      - alert: HighAnomalyRate
+        expr: rate(anomalies_total[1m]) > 0.1
+        for: 30s
+        labels:
+          severity: warning
+        annotations:
+          summary: "Taux d'anomalies élevé"
+          description: "Le taux d'anomalies > 0.1/s sur la dernière minute"
+
+      - alert: DataQualityErrors
+        expr: increase(dq_records_total{outcome="invalid"}[1m]) > 0
+        for: 0s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Erreurs de Qualité de Données"
+          description: "Des erreurs DQ ont été détectées sur la dernière minute"

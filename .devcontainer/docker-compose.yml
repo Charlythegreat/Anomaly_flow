@@ -1,0 +1,61 @@
+services:
+  app:
+    image: mcr.microsoft.com/devcontainers/python:1-3.11-bullseye
+    volumes:
+      - ..:/workspaces/anomaly-flow:cached
+    command: sleep infinity
+    networks: [monnet]
+    depends_on: [redpanda]
+    environment:
+      - KAFKA_BROKER=redpanda:9092
+      - PYTHONDONTWRITEBYTECODE=1
+    ports:
+      - "8000:8000"
+
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:v23.3.14
+    command:
+      [
+        "redpanda",
+        "start",
+        "--overprovisioned",
+        "--smp",
+        "1",
+        "--memory",
+        "1G",
+        "--reserve-memory",
+        "0M",
+        "--node-id",
+        "0",
+        "--check=false"
+      ]
+    ports:
+      - "9092:9092"
+    networks: [monnet]
+
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    volumes:
+      - ../prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ../prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+    command: ["--config.file=/etc/prometheus/prometheus.yml"]
+    ports:
+      - "9090:9090"
+    networks: [monnet]
+    depends_on: [app]
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    ports:
+      - "3000:3000"
+    networks: [monnet]
+    volumes:
+      - ../grafana/provisioning:/etc/grafana/provisioning:ro
+      - ../grafana/dashboards:/var/lib/grafana/dashboards:ro
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+
+networks:
+  monnet: {}

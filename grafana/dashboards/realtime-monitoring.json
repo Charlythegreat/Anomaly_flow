@@ -1,0 +1,70 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "iteration": 1710000000000,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Anomalies total",
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 },
+      "targets": [
+        { "expr": "anomalies_total", "refId": "A" }
+      ],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] } }
+    },
+    {
+      "type": "timeseries",
+      "title": "Taux d'anomalies (1m)",
+      "gridPos": { "h": 6, "w": 12, "x": 6, "y": 0 },
+      "targets": [
+        { "expr": "rate(anomalies_total[1m])", "refId": "A" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Erreurs DQ par check (1m)",
+      "gridPos": { "h": 7, "w": 18, "x": 0, "y": 6 },
+      "targets": [
+        { "expr": "increase(dq_records_total{outcome=\"invalid\"}[1m])", "refId": "A" }
+      ],
+      "legend": { "displayMode": "table" }
+    },
+    {
+      "type": "gauge",
+      "title": "Dernier score d'anomalie",
+      "gridPos": { "h": 7, "w": 6, "x": 18, "y": 6 },
+      "targets": [
+        { "expr": "last_anomaly_score", "refId": "A" }
+      ],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] } }
+    },
+    {
+      "type": "timeseries",
+      "title": "Valeur (Histogram proxy via summary)",
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 13 },
+      "targets": [
+        { "expr": "rate(event_value_count[1m])", "refId": "A" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Seuil dynamique",
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 13 },
+      "targets": [
+        { "expr": "anomaly_threshold", "refId": "A" }
+      ]
+    }
+  ],
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["monitoring", "anomaly", "dq"],
+  "time": { "from": "now-15m", "to": "now" },
+  "timezone": "browser",
+  "title": "DataShield RT — Real-time Monitoring",
+  "version": 1
+}
