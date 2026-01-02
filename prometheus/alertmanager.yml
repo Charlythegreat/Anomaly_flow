@@ -1,0 +1,126 @@
+global:
+  # Temps avant de considérer une alerte résolue si pas de nouvelle occurrence
+  resolve_timeout: 5m
+
+  # Configuration Slack globale
+  slack_api_url: 'https://hooks.slack.com/services/VOTRE_WEBHOOK_ID'
+
+# Configuration des routes d'alertes
+route:
+  # Groupe les alertes par nom d'alerte
+  group_by: ['alertname', 'severity']
+  
+  # Délai avant d'envoyer la première notification pour un groupe
+  group_wait: 30s
+  
+  # Délai entre les notifications pour un même groupe
+  group_interval: 5m
+  
+  # Délai avant de renvoyer une notification si l'alerte est toujours active
+  repeat_interval: 4h
+  
+  # Receiver par défaut
+  receiver: 'default-receiver'
+  
+  # Routes spécifiques selon la sévérité
+  routes:
+    # Alertes critiques → Slack + Email immédiat
+    - match:
+        severity: critical
+      receiver: 'critical-alerts'
+      group_wait: 10s
+      repeat_interval: 1h
+    
+    # Alertes warning → Slack seulement
+    - match:
+        severity: warning
+      receiver: 'warning-alerts'
+      group_wait: 1m
+      repeat_interval: 4h
+
+# Configuration des receivers (destinations)
+receivers:
+  # Receiver par défaut (console/webhook)
+  - name: 'default-receiver'
+    webhook_configs:
+      - url: 'http://host.docker.internal:5001/webhook'
+        send_resolved: true
+
+  # Alertes critiques: Slack + Email
+  - name: 'critical-alerts'
+    slack_configs:
+      - channel: '#anomaly-alerts'
+        username: 'Anomaly Flow'
+        icon_emoji: ':rotating_light:'
+        title: '🚨 {{ .Status | toUpper }} - {{ .CommonAnnotations.summary }}'
+        text: >-
+          {{ range .Alerts }}
+          *Alert:* {{ .Annotations.summary }}
+          *Description:* {{ .Annotations.description }}
+          *Severity:* {{ .Labels.severity }}
+          *Started:* {{ .StartsAt }}
+          {{ end }}
+        send_resolved: true
+        actions:
+          - type: button
+            text: 'Voir Grafana'
+            url: 'http://localhost:3000'
+          - type: button
+            text: 'Voir Prometheus'
+            url: 'http://localhost:9090/alerts'
+    
+    email_configs:
+      - to: 'votre-email@example.com'
+        from: 'alertmanager@anomaly-flow.local'
+        smarthost: 'smtp.gmail.com:587'
+        auth_username: 'votre-email@gmail.com'
+        auth_password: 'votre-app-password'
+        send_resolved: true
+        headers:
+          Subject: '🚨 [CRITICAL] Anomaly Flow Alert - {{ .CommonAnnotations.summary }}'
+        html: |
+          <html>
+          <body>
+          <h2 style="color: #d32f2f;">🚨 Alerte Critique</h2>
+          {{ range .Alerts }}
+          <table style="border-collapse: collapse; margin: 20px 0;">
+            <tr>
+              <td style="padding: 10px; background: #f5f5f5;"><strong>Alerte</strong></td>
+              <td style="padding: 10px;">{{ .Annotations.summary }}</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px; background: #f5f5f5;"><strong>Description</strong></td>
+              <td style="padding: 10px;">{{ .Annotations.description }}</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px; background: #f5f5f5;"><strong>Début</strong></td>
+              <td style="padding: 10px;">{{ .StartsAt }}</td>
+            </tr>
+          </table>
+          {{ end }}
+          <p><a href="http://localhost:3000">Voir Dashboard Grafana</a></p>
+          </body>
+          </html>
+
+  # Alertes warning: Slack seulement
+  - name: 'warning-alerts'
+    slack_configs:
+      - channel: '#anomaly-alerts'
+        username: 'Anomaly Flow'
+        icon_emoji: ':warning:'
+        title: '⚠️ {{ .Status | toUpper }} - {{ .CommonAnnotations.summary }}'
+        text: >-
+          {{ range .Alerts }}
+          *Alert:* {{ .Annotations.summary }}
+          *Description:* {{ .Annotations.description }}
+          {{ end }}
+        send_resolved: true
+
+# Règles d'inhibition (éviter les alertes redondantes)
+inhibit_rules:
+  # Si une alerte critical existe, ne pas envoyer les warnings du même groupe
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname']

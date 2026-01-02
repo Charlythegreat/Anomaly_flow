@@ -65,6 +65,6 @@
   "tags": ["monitoring", "anomaly", "dq"],
   "time": { "from": "now-15m", "to": "now" },
   "timezone": "browser",
-  "title": "DataShield RT — Real-time Monitoring",
+  "title": "Anomaly Flow — Real-time Monitoring",
   "version": 1
 }

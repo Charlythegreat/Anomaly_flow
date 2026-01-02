@@ -85,7 +85,7 @@ def run_processor():
             evt = Event(**evt_raw).model_dump()
         except Exception as e:
             dq_records_total.labels("invalid", "schema").inc()
-            log.warning("schema_invalid", error=str(e), event=evt_raw)
+            log.warning("schema_invalid", error=str(e), raw_event=evt_raw)
             continue
 
         # Data Quality checks
