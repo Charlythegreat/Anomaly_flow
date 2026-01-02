@@ -1,13 +1,23 @@
 #!/usr/bin/env python3
 """
 Script de test pour vérifier la configuration email SMTP.
+
+Ce script permet de tester la configuration SMTP avant d'utiliser
+le consumer d'alertes. Il envoie un email de test et affiche
+les résultats détaillés de chaque étape.
+
 Usage:
-    SMTP_HOST=smtp.gmail.com \
-    SMTP_PORT=587 \
-    SMTP_USER=votre-email@gmail.com \
-    SMTP_PASSWORD=votre-app-password \
-    EMAIL_TO=destinataire@example.com \
+    SMTP_HOST=smtp.gmail.com \\
+    SMTP_PORT=587 \\
+    SMTP_USER=votre-email@gmail.com \\
+    SMTP_PASSWORD=votre-app-password \\
+    EMAIL_TO=destinataire@example.com \\
     python -m src.test_email
+
+Configuration Gmail:
+    1. Activez la vérification en 2 étapes sur votre compte Google
+    2. Créez un "App Password": https://myaccount.google.com/apppasswords
+    3. Utilisez ce mot de passe (16 caractères) comme SMTP_PASSWORD
 """
 
 import os
@@ -18,15 +28,31 @@ from datetime import datetime
 
 
 def test_email_config():
-    """Test la configuration SMTP et envoie un email de test."""
+    """
+    Teste la configuration SMTP et envoie un email de test.
     
-    # Récupérer la configuration
+    Vérifie:
+        1. Que toutes les variables d'environnement sont définies
+        2. La connexion au serveur SMTP
+        3. L'activation du chiffrement TLS
+        4. L'authentification
+        5. L'envoi effectif de l'email
+    
+    Returns:
+        True si le test a réussi, False sinon
+    """
+    # ═══════════════════════════════════════════════════════════════════
+    # Récupération de la configuration depuis les variables d'environnement
+    # ═══════════════════════════════════════════════════════════════════
     smtp_host = os.getenv("SMTP_HOST", "smtp.gmail.com")
     smtp_port = int(os.getenv("SMTP_PORT", "587"))
     smtp_user = os.getenv("SMTP_USER", "")
-    smtp_password = os.getenv("SMTP_PASSWORD", "")
+    smtp_password = os.getenv("SMTP_PASSWORD", "") or os.getenv("SMTP_PASS", "")
     email_to = os.getenv("EMAIL_TO", "")
     
+    # ═══════════════════════════════════════════════════════════════════
+    # Affichage de la configuration actuelle
+    # ═══════════════════════════════════════════════════════════════════
     print("=" * 60)
     print("🧪 TEST DE CONFIGURATION EMAIL SMTP")
     print("=" * 60)
@@ -38,7 +64,9 @@ def test_email_config():
     print(f"   EMAIL_TO:      {email_to or '❌ NON CONFIGURÉ'}")
     print()
     
-    # Vérifier les paramètres requis
+    # ═══════════════════════════════════════════════════════════════════
+    # Vérification des paramètres requis
+    # ═══════════════════════════════════════════════════════════════════
     missing = []
     if not smtp_user:
         missing.append("SMTP_USER")
@@ -60,13 +88,15 @@ def test_email_config():
         """)
         return False
     
-    # Créer l'email de test
+    # ═══════════════════════════════════════════════════════════════════
+    # Construction de l'email de test
+    # ═══════════════════════════════════════════════════════════════════
     msg = MIMEMultipart("alternative")
     msg["Subject"] = f"🧪 Test Anomaly Flow - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
     msg["From"] = smtp_user
     msg["To"] = email_to
     
-    # Version texte
+    # Contenu texte simple
     text_content = f"""
 Test de configuration email Anomaly Flow
 =========================================
@@ -81,7 +111,7 @@ Détails:
 Vous recevrez désormais les alertes d'anomalies par email.
     """
     
-    # Version HTML
+    # Contenu HTML enrichi
     html_content = f"""
     <html>
     <body style="font-family: Arial, sans-serif; padding: 20px;">
@@ -118,7 +148,9 @@ Vous recevrez désormais les alertes d'anomalies par email.
     msg.attach(MIMEText(text_content, "plain"))
     msg.attach(MIMEText(html_content, "html"))
     
-    # Envoyer l'email
+    # ═══════════════════════════════════════════════════════════════════
+    # Tentative de connexion et d'envoi
+    # ═══════════════════════════════════════════════════════════════════
     print("📤 Tentative de connexion au serveur SMTP...")
     
     try:
